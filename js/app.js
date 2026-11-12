@@ -223,18 +223,112 @@ function renderNovel(book){
   renderBookmarks();
 }
 
-function readingElements(){return Array.from($("novelContent").querySelectorAll("[data-reading-index]"));}
-function currentReadingAnchor(){
-  const elements=readingElements();if(!elements.length)return null;
-  let current=elements[0];
-  for(const el of elements){if(el.getBoundingClientRect().top<=150)current=el;else break;}
-  return {index:Number(current.dataset.readingIndex)||0,offset:Math.round(current.getBoundingClientRect().top)};
+function readingElements(){
+  return Array.from(
+    $("novelContent").querySelectorAll("[data-reading-index]")
+  );
 }
+
+// 找出小說實際使用的滾動區域
+function getReaderScroller(){
+  let node = $("novelContent")?.parentElement;
+
+  while(node && node !== document.body && node !== document.documentElement){
+    const style = getComputedStyle(node);
+
+    if(
+      /auto|scroll|overlay/.test(style.overflowY) &&
+      node.scrollHeight > node.clientHeight + 1
+    ){
+      return node;
+    }
+
+    node = node.parentElement;
+  }
+
+  return window;
+}
+
+// 取得段落相對於閱讀區域頂端的位置
+function getReadingTop(element, scroller){
+  const rect = element.getBoundingClientRect();
+
+  if(scroller === window){
+    return rect.top;
+  }
+
+  return rect.top - (
+    scroller.getBoundingClientRect().top + scroller.clientTop
+  );
+}
+
+// 取得目前畫面正在閱讀的段落
+function currentReadingAnchor(){
+  const elements = readingElements();
+  if(!elements.length) return null;
+
+  const scroller = getReaderScroller();
+  let current = elements[0];
+
+  for(const el of elements){
+    if(getReadingTop(el, scroller) <= 150){
+      current = el;
+    }else{
+      break;
+    }
+  }
+
+  return {
+    index: Number(current.dataset.readingIndex),
+    offset: Math.round(getReadingTop(current, scroller))
+  };
+}
+
+// 還原到指定段落
 function restoreReadingAnchor(anchor){
-  const el=readingElements().find(item=>Number(item.dataset.readingIndex)===Number(anchor.index));
-  if(!el)return false;
-  window.scrollTo({top:window.scrollY+el.getBoundingClientRect().top-Number(anchor.offset||0),behavior:"auto"});
+  if(!anchor) return false;
+
+  const el = readingElements().find(
+    item => Number(item.dataset.readingIndex) === Number(anchor.index)
+  );
+
+  if(!el) return false;
+
+  const scroller = getReaderScroller();
+  const difference =
+    getReadingTop(el, scroller) - Number(anchor.offset || 0);
+
+  if(scroller === window){
+    window.scrollTo({
+      top: window.scrollY + difference,
+      behavior: "auto"
+    });
+  }else{
+    scroller.scrollTop += difference;
+  }
+
   return true;
+}
+
+// 依照百分比還原閱讀位置（作為備用）
+function restoreReadingProgress(progress){
+  const scroller = getReaderScroller();
+  const value = Math.min(1, Math.max(0, Number(progress) || 0));
+
+  if(scroller === window){
+    const max = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight
+    );
+
+    window.scrollTo({
+      top: max * value,
+      behavior: "auto"
+    });
+  }else{
+    const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    scroller.scrollTop = max * value;
+  }
 }
 function renderBookmarks(){
   if(!$("bookmarkList")||!activeBookId)return;
@@ -261,7 +355,46 @@ function addManualBookmark(){
   m.bookmarks.unshift({id:`bm-${Date.now()}-${Math.random().toString(16).slice(2,7)}`,anchor,note:note.trim(),createdAt:Date.now()});
   saveMeta();renderBookmarks();toast("已收藏目前段落");
 }
-function saveProgress(){if(!activeBookId)return;clearTimeout(saveProgressTimer);saveProgressTimer=setTimeout(()=>{const max=document.documentElement.scrollHeight-innerHeight;const m=bookMeta(activeBookId);m.progress=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;m.readingAnchor=currentReadingAnchor();saveMeta();$("progressBar").style.width=`${m.progress*100}%`;$("progressText").textContent=`閱讀進度 ${Math.round(m.progress*100)}%`;},350);}
+// 立即儲存閱讀進度
+function saveProgressNow(){
+  if(!activeBookId) return;
+
+  const scroller = getReaderScroller();
+  let top, max;
+
+  if(scroller === window){
+    top = window.scrollY;
+    max = document.documentElement.scrollHeight - window.innerHeight;
+  }else{
+    top = scroller.scrollTop;
+    max = scroller.scrollHeight - scroller.clientHeight;
+  }
+
+  const m = bookMeta(activeBookId);
+
+  m.progress = max > 0
+    ? Math.min(1, Math.max(0, top / max))
+    : 0;
+
+  m.readingAnchor = currentReadingAnchor();
+
+  saveMeta();
+
+  $("progressBar").style.width = `${m.progress * 100}%`;
+  $("progressText").textContent =
+    `閱讀進度 ${Math.round(m.progress * 100)}%`;
+}
+
+// 滾動時延遲儲存，避免過度寫入
+function saveProgress(){
+  if(!activeBookId) return;
+
+  clearTimeout(saveProgressTimer);
+
+  saveProgressTimer = setTimeout(() => {
+    saveProgressNow();
+  }, 300);
+}
 function setFontSize(v){fontSize=Math.max(13,Math.min(32,v));localStorage.setItem("readerFontSize",fontSize);$("fontValue").textContent=`${fontSize} px`;$("novelContent").style.fontSize=`${fontSize}px`;}
 function setLineHeight(v){lineHeight=Math.max(1.5,Math.min(2.8,Math.round(v*10)/10));localStorage.setItem("readerLineHeight",lineHeight);$("lineValue").textContent=lineHeight;$("novelContent").style.lineHeight=lineHeight;}
 $("saveBookmarkBtn").onclick=addManualBookmark;
