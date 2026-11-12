@@ -19,6 +19,16 @@
       <p class="upload-message" id="uploadMessage" role="status"></p>
       <p class="admin-footnote">上傳後會更新 GitHub 共用書庫，所有訪客重新整理後即可看到。請確認你有權上傳及分享該作品。</p>
     </form>
+
+    <section class="library-card" aria-labelledby="libraryHeading">
+      <div class="library-heading">
+        <div><span class="eyebrow">LIBRARY CONTENTS</span><h2 id="libraryHeading">管理現有小說</h2></div>
+        <button class="secondary-button" id="refreshBooks" type="button">重新整理清單</button>
+      </div>
+      <p class="library-hint">輸入上方的管理者密碼後，即可查看書庫並刪除不需要的小說。刪除會同步更新 GitHub 的小說清單與 TXT 檔案，無法復原。</p>
+      <p class="library-message" id="libraryMessage" role="status"></p>
+      <div class="book-list" id="bookList"><p class="empty-books">按「重新整理清單」載入小說。</p></div>
+    </section>
   </main>
   <script src="js/upload-config.js"></script><script src="js/upload.js"></script>
 </body></html>
