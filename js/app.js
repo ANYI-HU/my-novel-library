@@ -722,14 +722,19 @@ function saveProgress() {
 // 書籤功能
 // ==============================
 
+
 function renderBookmarks() {
-  if (!$("bookmarkList") || !activeBookId) return;
+  const host = $("bookmarkList");
+  const count = $("bookmarkCount");
+
+  if (!host || !activeBookId) return;
 
   const items = bookMeta(activeBookId).bookmarks || [];
 
-  $("bookmarkCount").textContent = String(items.length);
-
-  const host = $("bookmarkList");
+  // 書籤數量顯示元素可能不存在，因此採用安全檢查
+  if (count) {
+    count.textContent = String(items.length);
+  }
 
   host.replaceChildren();
 
@@ -751,18 +756,18 @@ function renderBookmarks() {
     info.className = "bookmark-item-info";
 
     const title = document.createElement("strong");
-
     title.textContent = item.note || `書籤 ${index + 1}`;
 
     const detail = document.createElement("small");
 
+    const paragraphIndex = Number(item.anchor?.index);
+
     detail.textContent =
-      `第 ${Number(item.anchor.index) + 1} 個段落 · ${formatDate(item.createdAt)}`;
+      `第 ${paragraphIndex + 1} 個段落 · ${formatDate(item.createdAt)}`;
 
     info.append(title, detail);
 
     const jump = document.createElement("button");
-
     jump.type = "button";
     jump.className = "bookmark-jump";
     jump.textContent = "跳轉";
@@ -770,11 +775,12 @@ function renderBookmarks() {
     jump.onclick = () => {
       if (restoreReadingAnchor(item.anchor)) {
         saveProgressNow();
+      } else {
+        toast("找不到對應的閱讀段落");
       }
     };
 
     const remove = document.createElement("button");
-
     remove.type = "button";
     remove.className = "bookmark-remove";
     remove.textContent = "刪除";
@@ -784,7 +790,13 @@ function renderBookmarks() {
 
       const list = bookMeta(activeBookId).bookmarks;
 
-      list.splice(index, 1);
+      const targetIndex = list.findIndex(
+        bookmark => bookmark.id === item.id
+      );
+
+      if (targetIndex !== -1) {
+        list.splice(targetIndex, 1);
+      }
 
       saveMeta();
       renderBookmarks();
@@ -793,10 +805,10 @@ function renderBookmarks() {
     };
 
     row.append(info, jump, remove);
-
     host.append(row);
   });
 }
+
 
 function addManualBookmark() {
   if (!activeBookId) return;
