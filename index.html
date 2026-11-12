@@ -41,6 +41,16 @@
           <div class="reader-toolbar" id="readerToolbar" aria-label="閱讀設定面板"><span class="toolbar-caption">閱讀設定</span><div class="toolbar-group"><span>字體</span><button id="fontDown" aria-label="縮小字體">−</button><strong id="fontValue">19 px</strong><button id="fontUp" aria-label="放大字體">＋</button></div><div class="toolbar-group"><span>行距</span><button id="lineDown" aria-label="縮小行距">−</button><strong id="lineValue">2.1</strong><button id="lineUp" aria-label="增加行距">＋</button></div><label class="toolbar-encoding" for="encodingSelect">編碼<select id="encodingSelect" class="encoding-select"><option value="auto">自動辨識</option><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="gb18030">GB18030／GBK</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option></select></label><div class="toolbar-themes" aria-label="閱讀主題"><button class="theme-swatch selected" data-theme="coffee" aria-label="深咖啡"></button><button class="theme-swatch" data-theme="black" aria-label="純黑"></button><button class="theme-swatch" data-theme="paper" aria-label="米白"></button></div></div>
           <div class="reader-heading"><span class="eyebrow" id="bookMeta">NOW READING</span><h1 id="readerTitle">小說標題</h1></div>
           <div class="reading-progress"><div id="progressBar"></div></div>
+          <section class="bookmark-tools" aria-label="閱讀書籤">
+            <div class="bookmark-actions">
+              <button class="secondary-button" id="saveBookmarkBtn" type="button">＋ 收藏目前段落</button>
+              <button class="secondary-button" id="toggleBookmarksBtn" type="button" aria-expanded="false">▤ 我的書籤 <span id="bookmarkCount">0</span></button>
+            </div>
+            <div class="bookmark-panel hidden" id="bookmarkPanel">
+              <div class="bookmark-panel-heading"><strong>我的書籤</strong><small>點選項目即可跳轉</small></div>
+              <div id="bookmarkList" class="bookmark-list"></div>
+            </div>
+          </section>
           <div class="reader-body"><nav class="chapter-nav" id="chapterNav"><span class="chapter-label">章節導覽</span><div id="chapterList"><small>尚未辨識章節</small></div></nav><article class="novel-content" id="novelContent"></article></div>
           <div class="reader-footer"><span id="progressText">閱讀進度 0%</span><span>木棕書房 · 慢慢讀</span></div>
         </section>
