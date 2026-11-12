@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#211711">
+  <title>新增小說｜木棕書房</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="topbar admin-topbar"><a class="brand" href="index.html"><span class="brand-mark">M</span><span><strong>木棕書房</strong><small>MY NOVEL LIBRARY</small></span></a><a class="admin-back" href="index.html">← 返回書庫</a></header>
+  <main class="admin-main">
+    <div class="admin-intro"><span class="eyebrow">LIBRARY MANAGEMENT</span><h1>新增一本小說</h1><p>從手機選擇 TXT 檔案，完成資料確認後即可加入共用書庫。</p></div>
+    <form class="upload-card" id="uploadForm">
+      <label class="upload-drop" for="novelFile"><span class="upload-symbol">＋</span><strong id="filePrompt">選擇 TXT 檔案</strong><small id="fileMeta">支援 .txt 格式，可從手機檔案或雲端硬碟選取</small><input id="novelFile" type="file" accept=".txt,text/plain" required></label>
+      <div class="admin-field"><label for="novelTitle">小說名稱</label><input id="novelTitle" maxlength="160" placeholder="輸入小說名稱" required></div>
+      <div class="admin-field"><label for="novelAuthor">作者（選填）</label><input id="novelAuthor" maxlength="100" placeholder="輸入作者名稱"></div>
+      <div class="admin-field"><label for="fileEncoding">TXT 文字編碼</label><select id="fileEncoding"><option value="utf-8">UTF-8（建議）</option><option value="gb18030">簡體中文常見編碼（GBK／GB18030）</option><option value="big5">繁體中文（Big5）</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option></select><small>若不確定檔案編碼，可先選 UTF-8；上傳後若出現亂碼，請重新選擇正確編碼。</small></div>
+      <div class="admin-field"><label for="adminPassword">管理者密碼</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Cloudflare Worker 設定的管理密碼" required></div>
+      <div class="upload-progress hidden" id="uploadProgress"><div class="progress-track"><span id="progressFill"></span></div><small id="progressLabel">準備上傳…</small></div>
+      <button class="primary-button upload-submit" id="uploadButton" type="submit">上傳並新增至書庫</button>
+      <p class="upload-message" id="uploadMessage" role="status"></p>
+      <p class="admin-footnote">上傳後會更新 GitHub 共用書庫，所有訪客重新整理後即可看到。請確認你有權上傳及分享該作品。</p>
+    </form>
+  </main>
+  <script src="js/upload-config.js"></script><script src="js/upload.js"></script>
+</body></html>

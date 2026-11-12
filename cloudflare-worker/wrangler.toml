@@ -1,0 +1,13 @@
+name = "my-novel-library-uploader"
+main = "worker.js"
+compatibility_date = "2026-11-12"
+
+[vars]
+# 請改成你的 GitHub 帳號／組織名稱
+GITHUB_OWNER = "YOUR_GITHUB_USERNAME"
+# 請改成 GitHub Repository 名稱
+GITHUB_REPO = "my-novel-library"
+GITHUB_BRANCH = "main"
+# 建議填入 GitHub Pages 網站的完整來源，例如 https://username.github.io
+# 若 Repository Pages 網址為 https://username.github.io/my-novel-library/，來源仍是 https://username.github.io
+ALLOWED_ORIGIN = "https://YOUR_GITHUB_USERNAME.github.io"

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#211711"><meta name="description" content="木棕書房｜共用 TXT 小說閱讀室">
+  <title>木棕書房｜My Novel Library</title><link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-mark">M</div><span class="eyebrow">A QUIET PLACE FOR STORIES</span>
+      <h1>木棕書房</h1><p>這是一間安靜的閱讀室。<br>請輸入通行密碼，繼續閱讀。</p>
+      <form id="loginForm" class="login-form">
+        <label for="passwordInput">閱讀室密碼</label>
+        <input id="passwordInput" type="password" placeholder="請輸入密碼" autocomplete="current-password" required>
+        <button class="primary-button login-button" type="submit">進入書房</button>
+        <div class="login-error" id="loginError" role="alert"></div>
+      </form>
+      <small>MY NOVEL LIBRARY · EST. FOR QUIET MOMENTS</small>
+    </div>
+  </section>
+
+  <div id="appRoot" class="hidden">
+    <header class="topbar">
+      <button class="mobile-menu icon-button" id="mobileMenu" aria-label="開啟或收合藏書目錄" title="藏書目錄">☰</button>
+      <a class="brand" href="#" aria-label="回到書庫首頁"><span class="brand-mark">M</span><span><strong>木棕書房</strong><small>MY NOVEL LIBRARY</small></span></a>
+      <div class="top-actions"><span class="local-indicator"><i></i> 共用書庫</span><a class="manage-link" href="admin.html">＋ 新增小說</a><button class="icon-button" id="lockBtn" title="離開並鎖定書房" aria-label="鎖定書房">↪</button></div>
+    </header>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-heading"><div><span class="eyebrow">SHARED COLLECTION</span><h2>藏書目錄</h2></div><span class="book-count" id="bookCount">0 本</span></div>
+        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="搜尋小說名稱…" autocomplete="off"></label>
+        <div class="filter-row"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="recent">最近閱讀</button><button class="filter" data-filter="favorite">我的收藏</button></div>
+        <div class="library-list" id="libraryList"><div class="empty-library"><div class="empty-icon">▤</div><p>正在整理書架…</p></div></div>
+        <div class="sidebar-bottom"><div class="privacy-note"><span>▣</span><div><strong>大家共用同一份書庫</strong><small>小說由管理者更新；收藏與閱讀進度保存在各自的瀏覽器。</small></div></div><div class="sidebar-footnote">閱讀愉快，請尊重作品著作權。</div></div>
+      </aside>
+      <main class="main-area">
+        <section class="welcome-panel" id="welcomePanel"><div class="welcome-decoration">READ<br>AT YOUR<br>OWN PACE.</div><div class="welcome-content"><span class="eyebrow">A QUIET PLACE FOR STORIES</span><h1>留一盞燈，<br>給正在閱讀的你。</h1><p>挑一本喜歡的故事，<br>在自己的步調裡慢慢讀。</p><small class="welcome-hint">木棕書房 · 共用閱讀室</small></div></section>
+        <section class="reader hidden" id="reader">
+          <div class="reader-topline"><div class="breadcrumbs"><span>木棕書房</span><b>/</b><span id="breadcrumbTitle">小說</span></div><div class="reader-actions"><button class="icon-button" id="favoriteBtn" title="加入收藏">♡</button></div></div>
+          <div class="reader-toolbar" id="readerToolbar" aria-label="閱讀設定面板"><span class="toolbar-caption">閱讀設定</span><div class="toolbar-group"><span>字體</span><button id="fontDown" aria-label="縮小字體">−</button><strong id="fontValue">19 px</strong><button id="fontUp" aria-label="放大字體">＋</button></div><div class="toolbar-group"><span>行距</span><button id="lineDown" aria-label="縮小行距">−</button><strong id="lineValue">2.1</strong><button id="lineUp" aria-label="增加行距">＋</button></div><label class="toolbar-encoding" for="encodingSelect">編碼<select id="encodingSelect" class="encoding-select"><option value="auto">自動辨識</option><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="gb18030">GB18030／GBK</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option></select></label><div class="toolbar-themes" aria-label="閱讀主題"><button class="theme-swatch selected" data-theme="coffee" aria-label="深咖啡"></button><button class="theme-swatch" data-theme="black" aria-label="純黑"></button><button class="theme-swatch" data-theme="paper" aria-label="米白"></button></div></div>
+          <div class="reader-heading"><span class="eyebrow" id="bookMeta">NOW READING</span><h1 id="readerTitle">小說標題</h1></div>
+          <div class="reading-progress"><div id="progressBar"></div></div>
+          <div class="reader-body"><nav class="chapter-nav" id="chapterNav"><span class="chapter-label">章節導覽</span><div id="chapterList"><small>尚未辨識章節</small></div></nav><article class="novel-content" id="novelContent"></article></div>
+          <div class="reader-footer"><span id="progressText">閱讀進度 0%</span><span>木棕書房 · 慢慢讀</span></div>
+        </section>
+      </main>
+    </div>
+    <button class="settings-fab" id="settingsToggle" type="button" aria-label="開啟閱讀設定" aria-expanded="false" title="閱讀設定">Aa</button>
+  </div>
+  <div class="page-jump-controls" id="pageJumpControls" aria-label="頁面快速跳轉"><button id="backToTop" title="前往最上方" aria-label="前往最上方">↑</button><button id="backToBottom" title="前往最末端" aria-label="前往最末端">↓</button></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="js/config.js"></script><script src="js/app.js"></script>
+</body></html>
