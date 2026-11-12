@@ -190,3 +190,53 @@ body.theme-paper{--bg:#e9dfcf;--panel:#e1d4c2;--panel2:#d8c9b6;--line:#c4b39e;--
   .bookmark-item{gap:5px;padding:8px 7px}
   .bookmark-jump,.bookmark-remove{padding:6px 7px}
 }
+
+/* 右側快速操作按鍵 */
+.page-jump-controls #saveBookmarkBtn,
+.page-jump-controls #toggleBookmarksBtn{
+  width:42px;
+  height:42px;
+  min-width:42px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* 右側展開的書籤面板 */
+.page-jump-controls #bookmarkPanel{
+  position:absolute;
+  right:54px;
+  bottom:0;
+  width:min(340px, calc(100vw - 100px));
+  max-height:min(65vh, 560px);
+  overflow-y:auto;
+  margin:0;
+  z-index:10;
+  box-shadow:0 8px 28px #0005;
+}
+
+/* 書籤面板內的操作按鍵 */
+.page-jump-controls #bookmarkPanel button{
+  width:auto;
+  height:auto;
+  min-width:0;
+  border-radius:5px;
+  font-size:12px;
+  padding:6px 10px;
+}
+
+/* 手機版調整 */
+@media(max-width:620px){
+  .page-jump-controls{
+    right:12px;
+    bottom:18px;
+  }
+
+  .page-jump-controls #bookmarkPanel{
+    right:50px;
+    width:min(300px, calc(100vw - 75px));
+  }
+}
