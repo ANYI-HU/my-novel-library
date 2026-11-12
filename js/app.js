@@ -108,29 +108,121 @@ async function openBook(id, forceReload=false){
     $("sidebar").classList.remove("open");
   }catch(error){console.error(error);toast(`無法開啟「${book.title}」，請確認 TXT 檔案路徑。`);}
 }
+
 function renderNovel(book){
-  const content=$("novelContent");content.replaceChildren();
-  const lines=book.content.split("\n"),chapters=[];let chunk=[];const fragment=document.createDocumentFragment();
-  const pattern=/^\s*(第[〇零一二三四五六七八九十百千\d]+[章节節回卷幕部篇].*|序章|楔子|前言|後記|后记|番外篇?.*|終章|终章)\s*$/;
-  const flush=()=>{if(chunk.length){const p=document.createElement("p");p.textContent=chunk.join("\n");fragment.append(p);chunk=[];}};
+  const content = $("novelContent");
+  content.replaceChildren();
+
+  // 每本小說重新從第 0 個閱讀位置開始編號
+  let readingIndex = 0;
+
+  const lines = book.content.split("\n");
+  const chapters = [];
+  let chunk = [];
+
+  const fragment = document.createDocumentFragment();
+
+  // 辨識常見中文小說章節標題
+  const pattern = /^\s*(第[〇零一二三四五六七八九十百千\d]+[章节節回卷幕部篇].*|序章|楔子|前言|後記|后记|番外篇?.*|終章|终章)\s*$/;
+
+  // 將累積的文字建立成段落，並加入閱讀索引
+  const flush = () => {
+    const text = chunk.join("\n").trim();
+
+    if(text){
+      const p = document.createElement("p");
+      p.textContent = text;
+      p.dataset.readingIndex = String(readingIndex++);
+      fragment.append(p);
+    }
+
+    chunk = [];
+  };
+
   for(const line of lines){
-    const trimmed=line.trim();
-    if(trimmed && pattern.test(trimmed)){flush();const h=document.createElement("h2");h.className="chapter-heading";h.id=`chapter-${chapters.length}`;h.dataset.readingIndex=String(readingIndex++);h.textContent=trimmed;fragment.append(h);chapters.push({id:h.id,title:trimmed});}
-    else chunk.push(line);
+    const trimmed = line.trim();
+
+    // 遇到章節標題
+    if(trimmed && pattern.test(trimmed)){
+      flush();
+
+      const h = document.createElement("h2");
+      h.className = "chapter-heading";
+      h.id = `chapter-${chapters.length}`;
+      h.dataset.readingIndex = String(readingIndex++);
+      h.textContent = trimmed;
+
+      fragment.append(h);
+      chapters.push({
+        id: h.id,
+        title: trimmed
+      });
+    }
+    // 遇到空白行，代表一個段落結束
+    else if(!trimmed){
+      flush();
+    }
+    // 一般小說文字
+    else{
+      chunk.push(line);
+    }
   }
-  flush();content.append(fragment);
-  const nav=$("chapterNav"),navList=$("chapterList"),body=content.parentElement;
+
+  // 處理最後一個段落
+  flush();
+
+  content.append(fragment);
+
+  // 更新章節導覽
+  const nav = $("chapterNav");
+  const navList = $("chapterList");
+  const body = content.parentElement;
+
   navList.replaceChildren();
-  if(chapters.length>5){
-    nav.classList.remove("is-hidden");body.classList.remove("no-chapters");
-    const navFragment=document.createDocumentFragment();
-    chapters.forEach(ch=>{const a=document.createElement("button");a.className="chapter-link";a.textContent=ch.title;a.addEventListener("click",()=>document.getElementById(ch.id)?.scrollIntoView({behavior:"smooth",block:"start"}));navFragment.append(a);});
+
+  if(chapters.length > 5){
+    nav.classList.remove("is-hidden");
+    body.classList.remove("no-chapters");
+
+    const navFragment = document.createDocumentFragment();
+
+    chapters.forEach(ch => {
+      const a = document.createElement("button");
+      a.className = "chapter-link";
+      a.textContent = ch.title;
+
+      a.addEventListener("click", () => {
+        document.getElementById(ch.id)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+
+      navFragment.append(a);
+    });
+
     navList.append(navFragment);
-  }else{nav.classList.add("is-hidden");body.classList.add("no-chapters");}
-  content.style.fontSize=`${fontSize}px`;content.style.lineHeight=lineHeight;
-  const progress=bookMeta(book.id).progress||0;$("progressText").textContent=`閱讀進度 ${Math.round(progress*100)}%`;$("progressBar").style.width=`${progress*100}%`;
+  }else{
+    nav.classList.add("is-hidden");
+    body.classList.add("no-chapters");
+  }
+
+  // 套用閱讀設定
+  content.style.fontSize = `${fontSize}px`;
+  content.style.lineHeight = lineHeight;
+
+  // 更新閱讀進度
+  const progress = bookMeta(book.id).progress || 0;
+
+  $("progressText").textContent =
+    `閱讀進度 ${Math.round(progress * 100)}%`;
+
+  $("progressBar").style.width = `${progress * 100}%`;
+
+  // 更新書籤清單
   renderBookmarks();
 }
+
 function readingElements(){return Array.from($("novelContent").querySelectorAll("[data-reading-index]"));}
 function currentReadingAnchor(){
   const elements=readingElements();if(!elements.length)return null;
