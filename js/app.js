@@ -28,7 +28,7 @@ $("loginForm").addEventListener("submit", async e=>{
 $("lockBtn").onclick=lockApp;
 function toast(message){const el=$("toast");el.textContent=message;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600);}
 function formatDate(timestamp){return new Date(timestamp).toLocaleDateString("zh-TW",{month:"numeric",day:"numeric"});}
-function bookMeta(id){return meta[id]||(meta[id]={favorite:false,lastRead:null,progress:0});}
+function bookMeta(id){return meta[id]||(meta[id]={favorite:false,lastRead:null,progress:0,readingAnchor:null,bookmarks:[]});}
 async function loadLibrary(){
   try{
     const response=await fetch("novels/manifest.json",{cache:"no-store"});
@@ -97,7 +97,14 @@ async function openBook(id, forceReload=false){
     const m=bookMeta(id);m.lastRead=Date.now();saveMeta();
     $("welcomePanel").classList.add("hidden");$("reader").classList.remove("hidden");$("readerTitle").textContent=book.title;$("breadcrumbTitle").textContent=book.title;$("bookMeta").textContent=`NOW READING · ${Math.max(1,book.content.length).toLocaleString()} CHARACTERS`;
     $("favoriteBtn").textContent=m.favorite?"♥":"♡";$("favoriteBtn").classList.toggle("is-favorite",m.favorite);renderNovel(book);renderLibrary();
-    requestAnimationFrame(()=>{const max=document.documentElement.scrollHeight-innerHeight;window.scrollTo(0,max*(m.progress||0));});
+    requestAnimationFrame(()=>{
+      if(m.readingAnchor && !restoreReadingAnchor(m.readingAnchor)){
+        const max=document.documentElement.scrollHeight-innerHeight;window.scrollTo(0,max*(m.progress||0));
+      }else if(!m.readingAnchor){
+        const max=document.documentElement.scrollHeight-innerHeight;window.scrollTo(0,max*(m.progress||0));
+      }
+      renderBookmarks();
+    });
     $("sidebar").classList.remove("open");
   }catch(error){console.error(error);toast(`無法開啟「${book.title}」，請確認 TXT 檔案路徑。`);}
 }
@@ -108,7 +115,7 @@ function renderNovel(book){
   const flush=()=>{if(chunk.length){const p=document.createElement("p");p.textContent=chunk.join("\n");fragment.append(p);chunk=[];}};
   for(const line of lines){
     const trimmed=line.trim();
-    if(trimmed && pattern.test(trimmed)){flush();const h=document.createElement("h2");h.className="chapter-heading";h.id=`chapter-${chapters.length}`;h.textContent=trimmed;fragment.append(h);chapters.push({id:h.id,title:trimmed});}
+    if(trimmed && pattern.test(trimmed)){flush();const h=document.createElement("h2");h.className="chapter-heading";h.id=`chapter-${chapters.length}`;h.dataset.readingIndex=String(readingIndex++);h.textContent=trimmed;fragment.append(h);chapters.push({id:h.id,title:trimmed});}
     else chunk.push(line);
   }
   flush();content.append(fragment);
@@ -122,10 +129,55 @@ function renderNovel(book){
   }else{nav.classList.add("is-hidden");body.classList.add("no-chapters");}
   content.style.fontSize=`${fontSize}px`;content.style.lineHeight=lineHeight;
   const progress=bookMeta(book.id).progress||0;$("progressText").textContent=`閱讀進度 ${Math.round(progress*100)}%`;$("progressBar").style.width=`${progress*100}%`;
+  renderBookmarks();
 }
-function saveProgress(){if(!activeBookId)return;clearTimeout(saveProgressTimer);saveProgressTimer=setTimeout(()=>{const max=document.documentElement.scrollHeight-innerHeight;const m=bookMeta(activeBookId);m.progress=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;saveMeta();$("progressBar").style.width=`${m.progress*100}%`;$("progressText").textContent=`閱讀進度 ${Math.round(m.progress*100)}%`;},350);}
+function readingElements(){return Array.from($("novelContent").querySelectorAll("[data-reading-index]"));}
+function currentReadingAnchor(){
+  const elements=readingElements();if(!elements.length)return null;
+  let current=elements[0];
+  for(const el of elements){if(el.getBoundingClientRect().top<=150)current=el;else break;}
+  return {index:Number(current.dataset.readingIndex)||0,offset:Math.round(current.getBoundingClientRect().top)};
+}
+function restoreReadingAnchor(anchor){
+  const el=readingElements().find(item=>Number(item.dataset.readingIndex)===Number(anchor.index));
+  if(!el)return false;
+  window.scrollTo({top:window.scrollY+el.getBoundingClientRect().top-Number(anchor.offset||0),behavior:"auto"});
+  return true;
+}
+function renderBookmarks(){
+  if(!$("bookmarkList")||!activeBookId)return;
+  const items=bookMeta(activeBookId).bookmarks||[];
+  $("bookmarkCount").textContent=String(items.length);
+  const host=$("bookmarkList");host.replaceChildren();
+  if(!items.length){const empty=document.createElement("p");empty.className="bookmark-empty";empty.textContent="尚未新增手動書籤。";host.append(empty);return;}
+  items.forEach((item,index)=>{
+    const row=document.createElement("div");row.className="bookmark-item";
+    const info=document.createElement("div");info.className="bookmark-item-info";
+    const title=document.createElement("strong");title.textContent=item.note||`書籤 ${index+1}`;
+    const detail=document.createElement("small");detail.textContent=`第 ${Number(item.anchor.index)+1} 個段落 · ${formatDate(item.createdAt)}`;
+    info.append(title,detail);
+    const jump=document.createElement("button");jump.type="button";jump.className="bookmark-jump";jump.textContent="跳轉";jump.onclick=()=>{if(restoreReadingAnchor(item.anchor)){saveProgress();window.scrollBy({top:-0,behavior:"auto"});}};
+    const remove=document.createElement("button");remove.type="button";remove.className="bookmark-remove";remove.textContent="刪除";remove.onclick=()=>{if(!confirm("確定刪除此書籤？"))return;const list=bookMeta(activeBookId).bookmarks;list.splice(index,1);saveMeta();renderBookmarks();toast("已刪除書籤");};
+    row.append(info,jump,remove);host.append(row);
+  });
+}
+function addManualBookmark(){
+  if(!activeBookId)return;
+  const anchor=currentReadingAnchor();if(!anchor){toast("目前沒有可收藏的段落");return;}
+  const note=prompt("替這個書籤加上備註（可留空）：","");if(note===null)return;
+  const m=bookMeta(activeBookId);m.bookmarks=m.bookmarks||[];
+  m.bookmarks.unshift({id:`bm-${Date.now()}-${Math.random().toString(16).slice(2,7)}`,anchor,note:note.trim(),createdAt:Date.now()});
+  saveMeta();renderBookmarks();toast("已收藏目前段落");
+}
+function saveProgress(){if(!activeBookId)return;clearTimeout(saveProgressTimer);saveProgressTimer=setTimeout(()=>{const max=document.documentElement.scrollHeight-innerHeight;const m=bookMeta(activeBookId);m.progress=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;m.readingAnchor=currentReadingAnchor();saveMeta();$("progressBar").style.width=`${m.progress*100}%`;$("progressText").textContent=`閱讀進度 ${Math.round(m.progress*100)}%`;},350);}
 function setFontSize(v){fontSize=Math.max(13,Math.min(32,v));localStorage.setItem("readerFontSize",fontSize);$("fontValue").textContent=`${fontSize} px`;$("novelContent").style.fontSize=`${fontSize}px`;}
 function setLineHeight(v){lineHeight=Math.max(1.5,Math.min(2.8,Math.round(v*10)/10));localStorage.setItem("readerLineHeight",lineHeight);$("lineValue").textContent=lineHeight;$("novelContent").style.lineHeight=lineHeight;}
+$("saveBookmarkBtn").onclick=addManualBookmark;
+$("toggleBookmarksBtn").onclick=()=>{
+  const panel=$("bookmarkPanel"),open=panel.classList.toggle("hidden")===false;
+  $("toggleBookmarksBtn").setAttribute("aria-expanded",String(open));
+  if(open)renderBookmarks();
+};
 $("searchInput").oninput=renderLibrary;
 document.querySelectorAll(".filter").forEach(btn=>btn.onclick=()=>{activeFilter=btn.dataset.filter;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===btn));renderLibrary();});
 $("favoriteBtn").onclick=()=>{if(!activeBookId)return;const m=bookMeta(activeBookId);m.favorite=!m.favorite;saveMeta();$("favoriteBtn").textContent=m.favorite?"♥":"♡";$("favoriteBtn").classList.toggle("is-favorite",m.favorite);renderLibrary();toast(m.favorite?"已加入我的收藏":"已取消收藏");};
@@ -139,6 +191,15 @@ if(sessionStorage.getItem(SESSION_KEY)==="yes"&&isConfigured())showApp();
 $("backToTop").onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
 $("backToBottom").onclick=()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"});
 window.addEventListener("scroll",saveProgress,{passive:true});
+window.addEventListener("pagehide",()=>{
+  if(!activeBookId)return;
+  clearTimeout(saveProgressTimer);
+  const max=document.documentElement.scrollHeight-innerHeight;
+  const m=bookMeta(activeBookId);
+  m.progress=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;
+  m.readingAnchor=currentReadingAnchor();
+  saveMeta();
+});
 $("mobileMenu").onclick=()=>{
   const sidebar=$("sidebar");
   if(window.matchMedia("(max-width: 620px)").matches){
